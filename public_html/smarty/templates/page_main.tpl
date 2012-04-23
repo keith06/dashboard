@@ -1,0 +1,1 @@
+<a href="/new/">create a new dashboard!</a>
