@@ -1,12 +1,28 @@
 function Dashboard($aOptions)
 {
-    $this = this;
-    $mUrl = "http://dashboard/ajax/";
-    $mStreamUrl = "http://dashboard/stream/";
-    $mLastUpdateId = 0;
-    var $mDashboard;
-    var $mMessageInput;
-    var $mMessageList;
+    var $this = this;
+    var $mUrl = "http://dashboard/ajax/";
+    var $mStreamUrl = "http://dashboard/stream/";
+    var $mSvgNs = "http://www.w3.org/2000/svg";
+    var $mLastUpdateId = 0;
+    var $mDashboardCode;
+
+    var $mSvgDashboard;
+    var $mChatInput;
+    var $mChatList;
+    var $mSectionControls;
+
+    var $mActiveControl;
+    var $mTemporaryObject;
+    var $mColorFill = '#0000ff';
+    var $mColorBorder = '#000000';
+    var $mBorder = '0';
+
+    var $mMouseDown = false;
+    var $mMouseX = 0;
+    var $mMouseY = 0;
+    var $mOffsetX = 0;
+    var $mOffsetY = 0;
 
 
     parseResponse = function(r)
@@ -32,7 +48,7 @@ function Dashboard($aOptions)
         console.log('create connection');
         new Ajax.Request($mStreamUrl, {
             method: 'post',
-            parameters: { dashboard: $mDashboard, last_update: $mLastUpdateId },
+            parameters: { dashboard: $mDashboardCode, last_update: $mLastUpdateId },
             onComplete: function(r) { console.log('before parse'); parseResponse(r); console.log('attempt create connection'); createConnection(); }
         });
     }
@@ -40,39 +56,115 @@ function Dashboard($aOptions)
 
     addChatMessage = function($aMessage)
     {
-        $($mMessageList).update($($mMessageList).innerHTML + "<br>" + $aMessage);
+        $mChatList.update($mChatList.innerHTML + "<br>" + $aMessage);
     }
 
 
     sendMessage = function()
     {
-        $lMessage = $($mMessageInput).value;
-        $($mMessageInput).value = "";
+        $lMessage = $mChatInput.value;
+        $mChatInput.value = "";
 
         addChatMessage($lMessage);
 
         new Ajax.Request($mUrl, {
             method: 'post',
-            parameters: { message: $lMessage, dashboard: $mDashboard }
+            parameters: { message: $lMessage, dashboard: $mDashboardCode }
         });
+    }
+
+
+    setActiveControl = function($aControl)
+    {
+        $mActiveControl = $aControl;
+
+        console.log($mActiveControl);
+    }
+
+
+    attachEventsControls = function()
+    {
+        Event.observe($mSectionControls.select('#control-line')[0], 'click', function() { setActiveControl('line') });
+        Event.observe($mSectionControls.select('#control-rect')[0], 'click', function() { setActiveControl('rect') });
+        Event.observe($mSectionControls.select('#control-ellipse')[0], 'click', function() { setActiveControl('ellipse') });
+    }
+
+
+    attachEventsChat = function()
+    {
+        Event.observe($mChatInput, 'keypress', function(e) { if(e.keyCode == 13) sendMessage() });
+    }
+
+
+    attachEventsDashboard = function()
+    {
+        Event.observe($mSvgDashboard, 'mousedown', dashboardMouseDown);
+        Event.observe($mSvgDashboard, 'mousemove', dashboardMouseMove);
+        Event.observe($mSvgDashboard, 'mouseup', dashboardMouseUp);
     }
 
 
     attachEvents = function()
     {
-        Event.observe($mMessageInput, 'keypress', function(e) { if(e.keyCode == 13) sendMessage() });
+        attachEventsChat();
+        attachEventsControls();
+        attachEventsDashboard();
+    }
+
+
+    dashboardMouseDown = function(e)
+    {
+        if($mActiveControl == 'rect') {
+            $mMouseDown = true;
+            $mMouseX = e.clientX + $mOffsetX;
+            $mMouseY = e.clientY + $mOffsetY;
+
+            $mTemporaryObject = document.createElementNS($mSvgNs, 'rect');
+            $mTemporaryObject.setAttribute('x', $mMouseX);
+            $mTemporaryObject.setAttribute('y', $mMouseY);
+            $mTemporaryObject.setAttribute('height', '10');
+            $mTemporaryObject.setAttribute('width', '10');
+            $mTemporaryObject.setAttribute('fill', $mColorFill);
+            $mTemporaryObject.setAttribute('stroke', $mColorBorder);
+            $mTemporaryObject.setAttribute('stroke-width', $mBorder);
+            $mSvgDashboard.appendChild($mTemporaryObject);
+        }
+    }
+
+
+    dashboardMouseMove = function(e)
+    {
+        if($mMouseDown) {
+            $lX = e.clientX + $mOffsetX;
+            $lY = e.clientY + $mOffsetY;
+
+            $mTemporaryObject.setAttribute('width', $lX - $mMouseX);
+            $mTemporaryObject.setAttribute('height', $lY - $mMouseY);
+        }
+    }
+
+
+    dashboardMouseUp = function(e)
+    {
+        $mMouseDown = false;
     }
 
 
     __construct = function($aOptions)
     {
-        if(!$aOptions.dashboard) {
+        if(!$aOptions.dashboard_code) {
             return;
         }
 
-        $mDashboard = $aOptions.dashboard;
-        $mMessageInput = $aOptions.message_input || 'message';
-        $mMessageList = $aOptions.message_list || 'message-list';
+        $mDashboardCode = $aOptions.dashboard_code;
+        $mChatInput = $($aOptions.chat_input || 'chat-input');
+        $mChatList = $($aOptions.chat_list || 'chat-list');
+        $mSectionControls = $($aOptions.controls || 'controls');
+        $mSvgDashboard = $($aOptions.dashboard || 'dashboard');
+
+        console.log($('dashboard'));
+        $mOffsetX = $($aOptions.dashboard || 'dashboard').positionedOffset()[0];
+        $mOffsetY = $($aOptions.dashboard || 'dashboard').positionedOffset()[1];
 
         attachEvents();
         createConnection();
