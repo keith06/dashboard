@@ -116,14 +116,14 @@ function Dashboard($aOptions)
     {
         if($mActiveControl == 'rect') {
             $mMouseDown = true;
-            $mMouseX = e.clientX + $mOffsetX;
-            $mMouseY = e.clientY + $mOffsetY;
+            $mMouseX = e.clientX - $mOffsetX;
+            $mMouseY = e.clientY - $mOffsetY;
 
             $mTemporaryObject = document.createElementNS($mSvgNs, 'rect');
             $mTemporaryObject.setAttribute('x', $mMouseX);
             $mTemporaryObject.setAttribute('y', $mMouseY);
-            $mTemporaryObject.setAttribute('height', '10');
-            $mTemporaryObject.setAttribute('width', '10');
+            $mTemporaryObject.setAttribute('height', '1');
+            $mTemporaryObject.setAttribute('width', '1');
             $mTemporaryObject.setAttribute('fill', $mColorFill);
             $mTemporaryObject.setAttribute('stroke', $mColorBorder);
             $mTemporaryObject.setAttribute('stroke-width', $mBorder);
@@ -135,8 +135,8 @@ function Dashboard($aOptions)
     dashboardMouseMove = function(e)
     {
         if($mMouseDown) {
-            $lX = e.clientX + $mOffsetX;
-            $lY = e.clientY + $mOffsetY;
+            $lX = e.clientX - $mOffsetX;
+            $lY = e.clientY - $mOffsetY;
 
             $mTemporaryObject.setAttribute('width', $lX - $mMouseX);
             $mTemporaryObject.setAttribute('height', $lY - $mMouseY);
@@ -163,8 +163,8 @@ function Dashboard($aOptions)
         $mSvgDashboard = $($aOptions.dashboard || 'dashboard');
 
         console.log($('dashboard'));
-        $mOffsetX = $($aOptions.dashboard || 'dashboard').positionedOffset()[0];
-        $mOffsetY = $($aOptions.dashboard || 'dashboard').positionedOffset()[1];
+        $mOffsetX = $($aOptions.dashboard || 'dashboard').offsetLeft + 3;
+        $mOffsetY = $($aOptions.dashboard || 'dashboard').offsetTop + 3;
 
         attachEvents();
         createConnection();

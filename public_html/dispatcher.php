@@ -16,7 +16,7 @@ $db = new PDO('sqlite:' . $CONFIG['db']);
 session_start();
 
 $uri = $_SERVER['REQUEST_URI'];
-error_log('test0');
+
 if(preg_match('/^\/$/', $uri)) {
     include('page_main.php');
 } elseif(preg_match('/\/new\/?$/', $uri)) {
