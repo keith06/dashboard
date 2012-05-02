@@ -1,28 +1,34 @@
-function Dashboard($aOptions)
+function Whiteboard($aOptions)
 {
     var $this = this;
-    var $mUrl = "http://dashboard/ajax/";
-    var $mStreamUrl = "http://dashboard/stream/";
+    var $mUrl = "http://whiteboard/ajax/";
+    var $mStreamUrl = "http://whiteboard/stream/";
     var $mSvgNs = "http://www.w3.org/2000/svg";
     var $mLastUpdateId = 0;
-    var $mDashboardCode;
+    var $mWhiteboardCode;
 
-    var $mSvgDashboard;
+    var $mSvgWhiteboard;
     var $mChatInput;
     var $mChatList;
     var $mSectionControls;
 
     var $mActiveControl;
+    var $mActiveObject;
     var $mTemporaryObject;
     var $mColorFill = '#0000ff';
     var $mColorBorder = '#000000';
     var $mBorder = '0';
 
     var $mMouseDown = false;
+    var $mObjectMouseDown = false;
     var $mMouseX = 0;
     var $mMouseY = 0;
     var $mOffsetX = 0;
     var $mOffsetY = 0;
+    var $mOriginalMouseX = 0;
+    var $mOriginalMouseY = 0;
+    var $mOriginalObjectX = 0;
+    var $mOriginalObjectY = 0;
 
 
     parseResponse = function(r)
@@ -48,7 +54,7 @@ function Dashboard($aOptions)
         console.log('create connection');
         new Ajax.Request($mStreamUrl, {
             method: 'post',
-            parameters: { dashboard: $mDashboardCode, last_update: $mLastUpdateId },
+            parameters: { whiteboard: $mWhiteboardCode, last_update: $mLastUpdateId },
             onComplete: function(r) { console.log('before parse'); parseResponse(r); console.log('attempt create connection'); createConnection(); }
         });
     }
@@ -69,7 +75,7 @@ function Dashboard($aOptions)
 
         new Ajax.Request($mUrl, {
             method: 'post',
-            parameters: { message: $lMessage, dashboard: $mDashboardCode }
+            parameters: { message: $lMessage, whiteboard: $mWhiteboardCode }
         });
     }
 
@@ -84,6 +90,7 @@ function Dashboard($aOptions)
 
     attachEventsControls = function()
     {
+        Event.observe($mSectionControls.select('#control-pointer')[0], 'click', function() { setActiveControl('pointer') });
         Event.observe($mSectionControls.select('#control-line')[0], 'click', function() { setActiveControl('line') });
         Event.observe($mSectionControls.select('#control-rect')[0], 'click', function() { setActiveControl('rect') });
         Event.observe($mSectionControls.select('#control-ellipse')[0], 'click', function() { setActiveControl('ellipse') });
@@ -96,11 +103,11 @@ function Dashboard($aOptions)
     }
 
 
-    attachEventsDashboard = function()
+    attachEventsWhiteboard = function()
     {
-        Event.observe($mSvgDashboard, 'mousedown', dashboardMouseDown);
-        Event.observe($mSvgDashboard, 'mousemove', dashboardMouseMove);
-        Event.observe($mSvgDashboard, 'mouseup', dashboardMouseUp);
+        Event.observe($mSvgWhiteboard, 'mousedown', whiteboardMouseDown);
+        Event.observe($mSvgWhiteboard, 'mousemove', whiteboardMouseMove);
+        Event.observe($mSvgWhiteboard, 'mouseup', whiteboardMouseUp);
     }
 
 
@@ -108,11 +115,32 @@ function Dashboard($aOptions)
     {
         attachEventsChat();
         attachEventsControls();
-        attachEventsDashboard();
+        attachEventsWhiteboard();
     }
 
 
-    dashboardMouseDown = function(e)
+    objectMouseDown = function(e)
+    {
+        if(!$mMouseDown) {
+            $mObjectMouseDown = true;
+            $mActiveObject = this;
+
+            $mOriginalMouseX = e.clientX - $mOffsetX;
+            $mOriginalMouseY = e.clientY - $mOffsetY;
+
+            $mOriginalObjectX = $mActiveObject.getAttribute('x');
+            $mOriginalObjectY = $mActiveObject.getAttribute('y');
+        }
+    }
+
+
+    objectMouseUp = function(e)
+    {
+        $mObjectMouseDown = false;
+    }
+
+
+    whiteboardMouseDown = function(e)
     {
         if($mActiveControl == 'rect') {
             $mMouseDown = true;
@@ -127,24 +155,50 @@ function Dashboard($aOptions)
             $mTemporaryObject.setAttribute('fill', $mColorFill);
             $mTemporaryObject.setAttribute('stroke', $mColorBorder);
             $mTemporaryObject.setAttribute('stroke-width', $mBorder);
-            $mSvgDashboard.appendChild($mTemporaryObject);
+            //$mTemporaryObject.setAttribute('shape-rendering', "crispEdges");
+
+            Event.observe($mTemporaryObject, 'mousedown', objectMouseDown);
+            Event.observe($mTemporaryObject, 'mouseup', objectMouseUp);
+
+            $mSvgWhiteboard.appendChild($mTemporaryObject);
+
+            setActiveControl('pointer');
         }
     }
 
 
-    dashboardMouseMove = function(e)
+    whiteboardMouseMove = function(e)
     {
         if($mMouseDown) {
             $lX = e.clientX - $mOffsetX;
             $lY = e.clientY - $mOffsetY;
 
-            $mTemporaryObject.setAttribute('width', $lX - $mMouseX);
-            $mTemporaryObject.setAttribute('height', $lY - $mMouseY);
+            if($mMouseX > $lX) {
+                $mTemporaryObject.setAttribute('x', $lX);
+                $mTemporaryObject.setAttribute('width', $mMouseX - $lX);
+            } else {
+                $mTemporaryObject.setAttribute('x', $mMouseX);
+                $mTemporaryObject.setAttribute('width', $lX - $mMouseX);
+            }
+
+            if($mMouseY > $lY) {
+                $mTemporaryObject.setAttribute('y', $lY);
+                $mTemporaryObject.setAttribute('height', $mMouseY - $lY);
+            } else {
+                $mTemporaryObject.setAttribute('y', $mMouseY);
+                $mTemporaryObject.setAttribute('height', $lY - $mMouseY);
+            }
+        } else if($mObjectMouseDown) {
+            $mMouseX = e.clientX - $mOffsetX;
+            $mMouseY = e.clientY - $mOffsetY;
+
+            $mActiveObject.setAttribute('x', parseInt($mOriginalObjectX) + $mMouseX - $mOriginalMouseX);
+            $mActiveObject.setAttribute('y', parseInt($mOriginalObjectY) + $mMouseY - $mOriginalMouseY);
         }
     }
 
 
-    dashboardMouseUp = function(e)
+    whiteboardMouseUp = function(e)
     {
         $mMouseDown = false;
     }
@@ -152,19 +206,19 @@ function Dashboard($aOptions)
 
     __construct = function($aOptions)
     {
-        if(!$aOptions.dashboard_code) {
+        if(!$aOptions.whiteboard_code) {
             return;
         }
 
-        $mDashboardCode = $aOptions.dashboard_code;
+        $mWhiteboardCode = $aOptions.whiteboard_code;
         $mChatInput = $($aOptions.chat_input || 'chat-input');
         $mChatList = $($aOptions.chat_list || 'chat-list');
         $mSectionControls = $($aOptions.controls || 'controls');
-        $mSvgDashboard = $($aOptions.dashboard || 'dashboard');
+        $mSvgWhiteboard = $($aOptions.whiteboard || 'whiteboard');
 
-        console.log($('dashboard'));
-        $mOffsetX = $($aOptions.dashboard || 'dashboard').offsetLeft + 3;
-        $mOffsetY = $($aOptions.dashboard || 'dashboard').offsetTop + 3;
+        console.log($('whiteboard'));
+        $mOffsetX = $($aOptions.whiteboard || 'whiteboard').offsetLeft + 3;
+        $mOffsetY = $($aOptions.whiteboard || 'whiteboard').offsetTop + 3;
 
         attachEvents();
         createConnection();

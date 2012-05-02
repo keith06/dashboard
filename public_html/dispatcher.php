@@ -18,16 +18,16 @@ session_start();
 $uri = $_SERVER['REQUEST_URI'];
 
 if(preg_match('/^\/$/', $uri)) {
-    include('page_main.php');
+	include('page_main.php');
 } elseif(preg_match('/\/new\/?$/', $uri)) {
-    include('page_new.php');
-} elseif(preg_match('/\/db\/([a-z0-9A-Z]{7})\/?$/', $uri, $dashboard_code)) {
-    include('page_dashboard.php');
+	include('page_new.php');
+} elseif(preg_match('/\/wb\/([a-z0-9A-Z]{7})\/?$/', $uri, $whiteboard_code)) {
+	include('page_whiteboard.php');
 } elseif(preg_match('/\/ajax\/$/', $uri)) {
-    include('page_ajax.php');
+	include('page_ajax.php');
 } elseif(preg_match('/\/stream\/$/', $uri)) {
-    include('page_stream.php');
+	include('page_stream.php');
 } else {
-    header('Location: ' . $CONFIG['host'] . '/');
-    exit;
+	header('Location: ' . $CONFIG['host']);
+	exit;
 }

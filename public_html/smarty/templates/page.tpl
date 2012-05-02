@@ -1,13 +1,12 @@
 <!doctype html>
 <html>
 <head>
- <title>Dashboard</title>
-
- <link rel="stylesheet/css" type="text/css" href="/css/reset.css">
- <link rel="stylesheet/less" type="text/css" href="/css/style.less">
- <script type="text/javascript" src="/js/lesscss.js"></script>
- <script type="text/javascript" src="/js/dashboard.js"></script>
- <script type="text/javascript" src="/js/prototype.js"></script>
+	<title>Whiteboard</title>
+	<link rel="stylesheet/css" type="text/css" href="/css/reset.css">
+	<link rel="stylesheet/less" type="text/css" href="/css/style.less">
+	<script type="text/javascript" src="/js/lesscss.js"></script>
+	<script type="text/javascript" src="/js/whiteboard.js"></script>
+	<script type="text/javascript" src="/js/prototype.js"></script>
 </head>
 
 <body>

@@ -1,1 +1,1 @@
-<a href="/new/">create a new dashboard!</a>
+<a href="/new/">create a new whiteboard!</a>
